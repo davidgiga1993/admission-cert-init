@@ -128,14 +128,14 @@ func patchWebhookConfig(config Config, caCert *bytes.Buffer) {
 			patches = append(patches, JsonPatch{
 				Operation: "add",
 				Path:      "/webhooks/" + strconv.Itoa(index) + "/clientConfig/caBundle",
-				Value:     caCert,
+				Value:     caCert.String(),
 			})
 			continue
 		}
 		patches = append(patches, JsonPatch{
 			Operation: "replace",
 			Path:      "/webhooks/" + strconv.Itoa(index) + "/clientConfig/caBundle",
-			Value:     caCert,
+			Value:     caCert.String(),
 		})
 	}
 
