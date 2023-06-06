@@ -7,6 +7,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/base64"
 	"encoding/pem"
 	"fmt"
 	log "github.com/sirupsen/logrus"
@@ -123,19 +124,21 @@ func patchWebhookConfig(config Config, caCert *bytes.Buffer) {
 	if err != nil {
 		panic(fmt.Errorf("could not get mutating webhook config %v: %v", config.WebhookName, err))
 	}
+
+	base64Cert := base64.StdEncoding.EncodeToString(caCert.Bytes())
 	for index, mutatingWebhook := range webhook.Webhooks {
 		if mutatingWebhook.ClientConfig.CABundle == nil {
 			patches = append(patches, JsonPatch{
 				Operation: "add",
 				Path:      "/webhooks/" + strconv.Itoa(index) + "/clientConfig/caBundle",
-				Value:     caCert.String(),
+				Value:     base64Cert,
 			})
 			continue
 		}
 		patches = append(patches, JsonPatch{
 			Operation: "replace",
 			Path:      "/webhooks/" + strconv.Itoa(index) + "/clientConfig/caBundle",
-			Value:     caCert.String(),
+			Value:     base64Cert,
 		})
 	}
 
