@@ -106,6 +106,8 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
+
+	patchWebhookConfig(config, caPEM)
 }
 
 // patchWebhookConfig Updates the caBundle of the webhook config
