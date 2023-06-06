@@ -146,7 +146,9 @@ func patchWebhookConfig(config Config, caCert *bytes.Buffer) {
 		types.JSONPatchType,
 		PatchToBytes(patches),
 		metav1.PatchOptions{})
-	panic(fmt.Errorf("could not patch mutating webhook config %v: %v", config.WebhookName, err))
+	if err != nil {
+		panic(fmt.Errorf("could not patch mutating webhook config %v: %v", config.WebhookName, err))
+	}
 }
 
 func writeFile(filepath string, data *bytes.Buffer) error {
