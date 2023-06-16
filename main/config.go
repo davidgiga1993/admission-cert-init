@@ -5,13 +5,23 @@ import (
 	"strings"
 )
 
+const ModeFile = "file"
+const ModeSecret = "secret"
+
 type Config struct {
 	SubjectOrg  string
 	CommonName  string
 	DnsNames    []string
-	KeyOutput   string
-	CertOutput  string
 	WebhookName string
+
+	Mode string
+	// File stuff
+	CaOutput   string
+	CertOutput string
+	// Secerts stuff
+	SecretName     string
+	SecretCertName string
+	SecretCaName   string
 }
 
 func LoadConfig() Config {
@@ -21,9 +31,15 @@ func LoadConfig() Config {
 		SubjectOrg:  attribute("SUBJECT_ORGANIZATION", "company.com"),
 		CommonName:  attribute("COMMON_NAME", "webhook-service.default.svc"),
 		DnsNames:    strings.Split(dnsNamesStr, ","),
-		KeyOutput:   attribute("KEY_OUTPUT", "/certs/key.pem"),
-		CertOutput:  attribute("CERT_OUTPUT", "/certs/cert.epm"),
 		WebhookName: attribute("WEBHOOK_NAME", "my-webhook"),
+
+		Mode:       attribute("MODE", "file"),
+		CaOutput:   attribute("CA_OUTPUT", "/certs/ca"),
+		CertOutput: attribute("CERT_OUTPUT", "/certs/cert"),
+
+		SecretName:     attribute("SECRET_NAME", "webhook-cert"),
+		SecretCertName: attribute("SECRET_CERT_NAME", "cert"),
+		SecretCaName:   attribute("SECRET_CA_NAME", "ca"),
 	}
 }
 
