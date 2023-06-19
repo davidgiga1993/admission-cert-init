@@ -41,6 +41,7 @@ func (c CertMagic) GenerateRootCa() (*rsa.PrivateKey, *x509.Certificate, error) 
 	caConfig := &x509.Certificate{
 		SerialNumber: big.NewInt(2020),
 		Subject: pkix.Name{
+			CommonName:   "admission-cert-ca",
 			Organization: []string{c.config.SubjectOrg},
 		},
 		NotBefore:             time.Now(),
@@ -49,6 +50,8 @@ func (c CertMagic) GenerateRootCa() (*rsa.PrivateKey, *x509.Certificate, error) 
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		BasicConstraintsValid: true,
+		AuthorityKeyId:        []byte{1, 2, 3, 4, 6},
+		SubjectKeyId:          []byte{1, 2, 3, 4, 6},
 	}
 	caBytes, err := x509.CreateCertificate(cryptorand.Reader, caConfig, caConfig, &caPrivKey.PublicKey, caPrivKey)
 	if err != nil {
@@ -58,7 +61,7 @@ func (c CertMagic) GenerateRootCa() (*rsa.PrivateKey, *x509.Certificate, error) 
 	return caPrivKey, caConfig, nil
 }
 
-func (c CertMagic) CreateCertificate(caPrivKey *rsa.PrivateKey) (*rsa.PrivateKey, *x509.Certificate, error) {
+func (c CertMagic) CreateCertificate(caCert *x509.Certificate, caPrivKey *rsa.PrivateKey) (*rsa.PrivateKey, *x509.Certificate, error) {
 	cert := &x509.Certificate{
 		DNSNames:     c.config.DnsNames,
 		SerialNumber: big.NewInt(1658),
@@ -68,7 +71,7 @@ func (c CertMagic) CreateCertificate(caPrivKey *rsa.PrivateKey) (*rsa.PrivateKey
 		},
 		NotBefore:    time.Now(),
 		NotAfter:     time.Now().AddDate(1, 0, 0),
-		SubjectKeyId: []byte{1, 2, 3, 4, 6},
+		SubjectKeyId: []byte{5, 6, 7, 8, 8},
 		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:     x509.KeyUsageDigitalSignature,
 	}
@@ -80,7 +83,7 @@ func (c CertMagic) CreateCertificate(caPrivKey *rsa.PrivateKey) (*rsa.PrivateKey
 	}
 
 	// sign the server cert
-	serverCertBytes, err := x509.CreateCertificate(cryptorand.Reader, cert, cert, &serverPrivKey.PublicKey, caPrivKey)
+	serverCertBytes, err := x509.CreateCertificate(cryptorand.Reader, cert, caCert, &serverPrivKey.PublicKey, caPrivKey)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -39,7 +39,7 @@ func main() {
 	}
 
 	if didUpdateCertificate || publicKey == nil || !isValid(publicKey) {
-		privateKey, publicKey, err = certMagic.CreateCertificate(caPrivateKey)
+		privateKey, publicKey, err = certMagic.CreateCertificate(caPublicKey, caPrivateKey)
 		didUpdateCertificate = true
 		if err != nil {
 			log.Panic(err)
