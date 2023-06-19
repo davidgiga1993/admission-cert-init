@@ -107,6 +107,10 @@ func (c CertIo) writeCertsToSecret(certs *CertCollection) error {
 			Data: make(map[string][]byte),
 		}
 	}
+	if secret.Data == nil {
+		secret.Data = make(map[string][]byte)
+	}
+
 	c.updateSecretCertificatePair(secret, certs.ca, c.config.SecretCaName)
 	c.updateSecretCertificatePair(secret, certs.cert, c.config.SecretCertName)
 
