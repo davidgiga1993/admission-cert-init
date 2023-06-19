@@ -78,13 +78,13 @@ func (c CertIo) readCertificatesFromSecret() (*CertCollection, error) {
 		cert: nil,
 	}
 	ca, err := c.readCertificateFromSecret(secret, c.config.SecretCaName)
-	if err != nil {
+	if err != nil || ca == nil {
 		return nil, err
 	}
 	collection.ca = ca
 
 	cert, err := c.readCertificateFromSecret(secret, c.config.SecretCaName)
-	if err != nil {
+	if err != nil || cert == nil {
 		return nil, err
 	}
 	collection.cert = cert
