@@ -73,6 +73,10 @@ func (c CertIo) readCertificatesFromSecret() (*CertCollection, error) {
 		return nil, err
 	}
 
+	if secret == nil || secret.Data == nil {
+		return nil, nil
+	}
+
 	collection := CertCollection{
 		ca:   nil,
 		cert: nil,
