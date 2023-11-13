@@ -75,7 +75,7 @@ func (k *KubeApi) UpdateSecret(secret *v1.Secret) (*v1.Secret, error) {
 	return k.kubeClient.CoreV1().Secrets(k.namespace).Update(k.ctx, secret, metav1.UpdateOptions{})
 }
 
-// GetWebhookConfigCa returns the currently configured CA for the webhook
+// GetWebhookConfigCa returns the currently configured CA for the webhook (PEM encoded)
 func (k *KubeApi) GetWebhookConfigCa(config Config) [][]byte {
 	webhook, err := k.kubeClient.AdmissionregistrationV1().MutatingWebhookConfigurations().Get(k.ctx, config.WebhookName, metav1.GetOptions{})
 	if err != nil {
@@ -87,7 +87,8 @@ func (k *KubeApi) GetWebhookConfigCa(config Config) [][]byte {
 
 	cas := make([][]byte, 0)
 	for _, mutatingWebhook := range webhook.Webhooks {
-		cas = append(cas, mutatingWebhook.ClientConfig.CABundle)
+		pem := mutatingWebhook.ClientConfig.CABundle
+		cas = append(cas, pem)
 	}
 	return cas
 }

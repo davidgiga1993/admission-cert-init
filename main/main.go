@@ -81,8 +81,13 @@ func IsDifferentCa(current [][]byte, expected *x509.Certificate) bool {
 	if current == nil {
 		return true
 	}
-	for _, ca := range current {
-		if !bytes.Equal(ca, expected.Raw) {
+	for _, pem := range current {
+		ca, err := pemToCertificate(pem)
+		if err != nil {
+			log.Warnf("could not parse pem %v", err)
+			continue
+		}
+		if !bytes.Equal(ca.Raw, expected.Raw) {
 			return true
 		}
 	}
