@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/rsa"
 	"crypto/x509"
 	log "github.com/sirupsen/logrus"
@@ -45,6 +46,14 @@ func main() {
 			log.Panic(err)
 		}
 	}
+
+	// Make sure the webhook config matches
+	configuredCas := kubeApi.GetWebhookConfigCa(config)
+	if IsDifferentCa(configuredCas, caPublicKey) {
+		log.Info("webhook ca didn't match secret - updating webhook..")
+		kubeApi.PatchWebhookConfig(config, toCertificatePem(caPublicKey.Raw))
+	}
+
 	if !didUpdateCertificate {
 		log.Info("no certificate update required")
 		return
@@ -65,6 +74,19 @@ func main() {
 	}
 
 	kubeApi.PatchWebhookConfig(config, toCertificatePem(caPublicKey.Raw))
+}
+
+// IsDifferentCa compares the given buffers and return true if both are not equal
+func IsDifferentCa(current [][]byte, expected *x509.Certificate) bool {
+	if current == nil {
+		return true
+	}
+	for _, ca := range current {
+		if !bytes.Equal(ca, expected.Raw) {
+			return true
+		}
+	}
+	return false
 }
 
 func isValid(key *x509.Certificate) bool {

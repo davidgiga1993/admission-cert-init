@@ -75,6 +75,23 @@ func (k *KubeApi) UpdateSecret(secret *v1.Secret) (*v1.Secret, error) {
 	return k.kubeClient.CoreV1().Secrets(k.namespace).Update(k.ctx, secret, metav1.UpdateOptions{})
 }
 
+// GetWebhookConfigCa returns the currently configured CA for the webhook
+func (k *KubeApi) GetWebhookConfigCa(config Config) [][]byte {
+	webhook, err := k.kubeClient.AdmissionregistrationV1().MutatingWebhookConfigurations().Get(k.ctx, config.WebhookName, metav1.GetOptions{})
+	if err != nil {
+		log.Panic(fmt.Errorf("could not get mutating webhook config %v: %v", config.WebhookName, err))
+	}
+	if len(webhook.Webhooks) == 0 {
+		return nil
+	}
+
+	cas := make([][]byte, 0)
+	for _, mutatingWebhook := range webhook.Webhooks {
+		cas = append(cas, mutatingWebhook.ClientConfig.CABundle)
+	}
+	return cas
+}
+
 // PatchWebhookConfig Updates the caBundle of the webhook config
 func (k *KubeApi) PatchWebhookConfig(config Config, caCert *bytes.Buffer) {
 	patches := make([]JsonPatch, 0)
