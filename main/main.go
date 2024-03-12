@@ -10,7 +10,7 @@ import (
 
 func main() {
 	config := LoadConfig()
-	kubeApi := CreateKubeApi(config)
+	kubeApi := CreateKubeApi()
 	certMagic := CreateCertMagic(config)
 	certIo := CreateCertIo(config, kubeApi)
 

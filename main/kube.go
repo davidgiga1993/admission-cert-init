@@ -17,13 +17,12 @@ import (
 )
 
 type KubeApi struct {
-	config     Config
 	kubeClient *kubernetes.Clientset
 	ctx        context.Context
 	namespace  string
 }
 
-func CreateKubeApi(config Config) KubeApi {
+func CreateKubeApi() KubeApi {
 	kubeConfig := ctrl.GetConfigOrDie()
 	kubeClient, err := kubernetes.NewForConfig(kubeConfig)
 	if err != nil {
@@ -36,7 +35,6 @@ func CreateKubeApi(config Config) KubeApi {
 	}
 
 	return KubeApi{
-		config:     config,
 		kubeClient: kubeClient,
 		namespace:  namespace,
 		ctx:        context.Background(),
@@ -75,7 +73,8 @@ func (k *KubeApi) UpdateSecret(secret *v1.Secret) (*v1.Secret, error) {
 	return k.kubeClient.CoreV1().Secrets(k.namespace).Update(k.ctx, secret, metav1.UpdateOptions{})
 }
 
-// GetWebhookConfigCa returns the currently configured CA for the webhook (PEM encoded)
+// GetWebhookConfigCa returns the currently configured CA for the webhook (PEM encoded) or nil
+// if no CA is configured
 func (k *KubeApi) GetWebhookConfigCa(config Config) [][]byte {
 	webhook, err := k.kubeClient.AdmissionregistrationV1().MutatingWebhookConfigurations().Get(k.ctx, config.WebhookName, metav1.GetOptions{})
 	if err != nil {
@@ -88,7 +87,12 @@ func (k *KubeApi) GetWebhookConfigCa(config Config) [][]byte {
 	cas := make([][]byte, 0)
 	for _, mutatingWebhook := range webhook.Webhooks {
 		pem := mutatingWebhook.ClientConfig.CABundle
-		cas = append(cas, pem)
+		if len(pem) > 0 {
+			cas = append(cas, pem)
+		}
+	}
+	if len(cas) == 0 {
+		return nil
 	}
 	return cas
 }
