@@ -31,7 +31,8 @@ func main() {
 		caPublicKey = certs.ca.publicKey
 		publicKey = certs.cert.publicKey
 	}
-	if caPublicKey == nil || !isValid(caPublicKey) {
+	if caPublicKey == nil || !isValid(caPublicKey, "CA") {
+		log.Info("renewing ca...")
 		caPrivateKey, caPublicKey, err = certMagic.GenerateRootCa()
 		didUpdateCertificate = true
 		if err != nil {
@@ -39,7 +40,8 @@ func main() {
 		}
 	}
 
-	if didUpdateCertificate || publicKey == nil || !isValid(publicKey) {
+	if didUpdateCertificate || publicKey == nil || !isValid(publicKey, "Cert") {
+		log.Info("renewing certificate...")
 		privateKey, publicKey, err = certMagic.CreateCertificate(caPublicKey, caPrivateKey)
 		didUpdateCertificate = true
 		if err != nil {
@@ -49,8 +51,8 @@ func main() {
 
 	// Make sure the webhook config matches
 	configuredCas := kubeApi.GetWebhookConfigCa(config)
-	if IsDifferentCa(configuredCas, caPublicKey) {
-		log.Info("webhook ca didn't match secret - updating webhook..")
+	if !didUpdateCertificate && IsDifferentCa(configuredCas, caPublicKey) {
+		log.Info("webhook ca didn't match secret - updating webhook...")
 		kubeApi.PatchWebhookConfig(config, toCertificatePem(caPublicKey.Raw))
 	}
 
@@ -94,7 +96,10 @@ func IsDifferentCa(current [][]byte, expected *x509.Certificate) bool {
 	return false
 }
 
-func isValid(key *x509.Certificate) bool {
+func isValid(key *x509.Certificate, logTag string) bool {
 	gracePeriod, _ := time.ParseDuration("720h")
-	return key.NotAfter.After(time.Now().Add(gracePeriod))
+	threshold := time.Now().Add(gracePeriod)
+	valid := key.NotAfter.After(threshold)
+	log.Infof("%s certificate is valid: %v (%v)", logTag, valid, key.NotAfter)
+	return valid
 }

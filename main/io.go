@@ -21,7 +21,6 @@ func CreateCertIo(config Config, api KubeApi) CertIo {
 }
 
 func (c CertIo) GetCurrentCerts() (*CertCollection, error) {
-
 	if c.config.Mode == ModeFile {
 		collection := CertCollection{
 			ca:   nil,
